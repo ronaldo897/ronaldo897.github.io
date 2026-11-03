@@ -1,0 +1,616 @@
+
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FARUQ POS - Kasir</title>
+<style>
+:root {
+  --blue:#1557d6;
+  --dark:#111827;
+  --bg:#edf2fa;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  color:#172033;
+  background:var(--bg);
+}
+.hidden{display:none!important}
+.login{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:linear-gradient(135deg,#0b3d91,#1557d6,#111827);
+}
+.login-card{
+  width:min(430px,100%);
+  background:white;
+  border-radius:26px;
+  padding:34px;
+  box-shadow:0 24px 70px #0003;
+}
+.logo{
+  width:66px;height:66px;
+  border-radius:20px;
+  display:grid;place-items:center;
+  color:white;font-weight:900;font-size:22px;
+  background:linear-gradient(135deg,#1557d6,#111827);
+  margin-bottom:18px;
+}
+h1{margin:0 0 7px}
+.sub{color:#68738a;margin-bottom:26px}
+label{
+  display:block;font-size:13px;
+  font-weight:700;margin:15px 0 7px;
+}
+input{
+  width:100%;padding:13px 14px;
+  border:1px solid #dbe2ef;
+  border-radius:12px;font-size:15px;
+}
+.btn{
+  border:0;border-radius:12px;
+  padding:13px 16px;font-weight:800;
+  cursor:pointer;
+}
+.primary{
+  background:linear-gradient(90deg,#1557d6,#111827);
+  color:white;width:100%;margin-top:22px;
+}
+.error{color:#c9202c;font-size:13px;margin-top:10px}
+.shell{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:245px 1fr;
+}
+.side{
+  background:linear-gradient(160deg,#0b3d91,#1557d6 48%,#111827);
+  color:white;padding:24px 16px;
+}
+.brand{font-size:22px;font-weight:900;padding:8px 10px 24px}
+.brand small{display:block;font-size:11px;opacity:.7}
+.nav{display:grid;gap:8px}
+.nav button{
+  border:0;background:transparent;color:white;
+  text-align:left;padding:12px;
+  border-radius:12px;font-weight:700;cursor:pointer;
+}
+.nav button.active,.nav button:hover{background:#ffffff20}
+.logout{
+  margin-top:30px;width:100%;
+  background:#ffffff18;color:white;
+  border:1px solid #ffffff2c;
+}
+.main{padding:26px;min-width:0}
+.top{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:15px;margin-bottom:22px;
+}
+.top h2{margin:0}
+.date{color:#66728a;font-size:13px}
+.stats{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:16px;margin-bottom:22px;
+}
+.stat{
+  background:white;border-radius:18px;
+  padding:19px;box-shadow:0 8px 25px #163a6b0d;
+}
+.stat b{display:block;font-size:24px;margin-top:6px}
+.stat span{font-size:13px;color:#6b7487}
+.pos{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 370px;
+  gap:18px;
+}
+.panel{
+  background:white;border-radius:18px;
+  padding:20px;box-shadow:0 8px 25px #163a6b0d;
+}
+.search{margin-bottom:16px}
+.search input{width:100%}
+.products{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.product-card{position:relative;min-width:0}
+.product{
+  width:100%;height:100%;
+  border:1px solid #e6eaf2;border-radius:14px;
+  padding:15px;text-align:left;background:white;
+  cursor:pointer;
+}
+.product:hover{border-color:#1557d655}
+.product-delete{
+  position:absolute;right:8px;top:8px;
+  width:29px;height:29px;border:0;
+  border-radius:9px;background:#fee2e2;
+  color:#b42318;font-size:17px;
+  font-weight:900;cursor:pointer;z-index:2;
+}
+.product .pic{
+  height:70px;border-radius:12px;
+  background:linear-gradient(135deg,#e8f0ff,#ffe9eb);
+  display:grid;place-items:center;
+  font-size:30px;margin-bottom:10px;
+}
+.product strong{display:block}
+.price{color:#1557d6;font-weight:800;margin-top:5px}
+.cart h3{margin-top:0}
+.cart-list{
+  display:grid;gap:10px;
+  max-height:320px;overflow:auto;
+}
+.item{
+  display:grid;grid-template-columns:1fr auto;
+  gap:8px;padding:11px 0;
+  border-bottom:1px solid #edf0f5;
+}
+.item small{color:#70798b}
+.qty{display:flex;align-items:center;gap:7px}
+.qty button{
+  width:27px;height:27px;border:0;
+  border-radius:8px;background:#edf3ff;
+  cursor:pointer;font-weight:900;
+}
+.total{
+  border-top:1px solid #e5e9f1;
+  margin-top:14px;padding-top:14px;
+}
+.row{
+  display:flex;justify-content:space-between;
+  margin:8px 0;color:#5f697d;
+}
+.grand{font-size:20px;font-weight:900;color:#172033}
+.pay{margin-top:14px}
+.pay select{
+  width:100%;padding:12px;
+  border:1px solid #dbe2ef;
+  border-radius:11px;background:white;
+}
+.manage-list{display:grid;gap:10px;margin-top:15px}
+.manage-item{
+  display:flex;align-items:center;
+  justify-content:space-between;gap:12px;
+  padding:12px;border:1px solid #e6eaf2;
+  border-radius:12px;
+}
+.manage-item small{
+  display:block;color:#70798b;margin-top:4px;
+}
+.danger{
+  background:#fee2e2;color:#b42318;
+  border:0;border-radius:9px;
+  padding:9px 12px;font-weight:800;cursor:pointer;
+}
+.form-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+.form-grid .wide{grid-column:1/-1}
+.form-grid button{width:100%}
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .side{padding:12px;position:sticky;top:0;z-index:5}
+  .nav{grid-template-columns:repeat(3,1fr)}
+  .logout{display:none}
+  .pos{grid-template-columns:1fr}
+  .products{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+  .main{padding:16px}
+  .stats{grid-template-columns:1fr}
+  .products{grid-template-columns:1fr}
+  .top{align-items:flex-start;flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<section id="login" class="login">
+  <div class="login-card">
+    <div class="logo">F</div>
+    <h1>FARUQ POS</h1>
+    <p class="sub">Sistem Kasir Sederhana</p>
+
+    <label>Username</label>
+    <input id="username" placeholder="Masukkan username">
+
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Masukkan password">
+
+    <button class="btn primary" onclick="login()">Masuk ke Kasir</button>
+    <div id="error" class="error"></div>
+  </div>
+</section>
+
+<section id="dashboard" class="shell hidden">
+
+<aside class="side">
+  <div class="brand">
+    FARUQ POS
+    <small>Kasir & Penjualan</small>
+  </div>
+
+  <div class="nav">
+    <button id="navKasir" class="active" onclick="showView('kasir')">🛒 Kasir</button>
+    <button id="navProduk" onclick="showView('produk')">📦 Pilihan Barang</button>
+    <button id="navPengaturan" onclick="showView('pengaturan')">⚙️ Pengaturan</button>
+  </div>
+
+  <button class="btn logout" onclick="logout()">Keluar</button>
+</aside>
+
+<main class="main">
+
+  <div class="top">
+    <div>
+      <h2>Kasir</h2>
+      <div class="date" id="date"></div>
+    </div>
+    <b>👤 Faruq</b>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <span>Total Hari Ini</span>
+      <b id="todayTotal">Rp 0</b>
+    </div>
+    <div class="stat">
+      <span>Transaksi</span>
+      <b id="trx">0</b>
+    </div>
+    <div class="stat">
+      <span>Item di Keranjang</span>
+      <b id="count">0</b>
+    </div>
+  </div>
+
+  <div id="kasirView" class="pos">
+
+    <section class="panel">
+      <div class="search">
+        <input id="search" placeholder="Cari produk..." oninput="renderProducts()">
+      </div>
+      <div class="products" id="products"></div>
+    </section>
+
+    <section class="panel cart">
+      <h3>Keranjang</h3>
+      <div id="cart" class="cart-list"></div>
+
+      <div class="total">
+        <div class="row">
+          <span>Subtotal</span>
+          <b id="subtotal">Rp 0</b>
+        </div>
+        <div class="row">
+          <span>Diskon</span>
+          <b>Rp 0</b>
+        </div>
+        <div class="row grand">
+          <span>Total</span>
+          <span id="grand">Rp 0</span>
+        </div>
+
+        <div class="pay">
+          <select id="method">
+            <option>Tunai</option>
+            <option>QRIS</option>
+            <option>Transfer</option>
+          </select>
+        </div>
+
+        <button class="btn primary" onclick="pay()">Bayar Sekarang</button>
+      </div>
+    </section>
+
+  </div>
+
+  <section id="produkView" class="panel hidden">
+    <h3>Daftar Pilihan Barang</h3>
+    <p style="color:#6b7487">
+      Hapus barang yang tidak ingin ditampilkan di menu kasir.
+    </p>
+    <div id="manageProducts" class="manage-list"></div>
+  </section>
+
+  <section id="pengaturanView" class="panel hidden">
+    <h3>⚙️ Pengaturan Barang</h3>
+    <p style="color:#6b7487">
+      Tambahkan barang baru agar muncul di pilihan produk kasir.
+    </p>
+
+    <div class="form-grid">
+      <div>
+        <label>Nama Barang</label>
+        <input id="newName" placeholder="Contoh: Roti Bakar">
+      </div>
+
+      <div>
+        <label>Harga (Rp)</label>
+        <input id="newPrice" type="number" min="1" placeholder="10000">
+      </div>
+
+      <div>
+        <label>Ikon / Emoji</label>
+        <input id="newEmoji" maxlength="4" placeholder="🍞">
+      </div>
+
+      <div class="wide">
+        <button class="btn primary" onclick="addProduct()">＋ Tambahkan Barang</button>
+      </div>
+    </div>
+
+    <div id="settingsMessage" style="margin-top:12px;color:#1557d6;font-weight:700"></div>
+  </section>
+
+</main>
+</section>
+</div>
+
+<script>
+const defaultProducts=[
+ {id:1,n:"Nasi Goreng",p:15000,e:"🍛"},
+ {id:2,n:"Mie Goreng",p:12000,e:"🍜"},
+ {id:3,n:"Es Teh",p:5000,e:"🧋"},
+ {id:4,n:"Kopi",p:7000,e:"☕"},
+ {id:5,n:"Ayam Geprek",p:18000,e:"🍗"},
+ {id:6,n:"Air Mineral",p:4000,e:"💧"}
+];
+
+let products=loadProducts();
+let cart=[];
+let transactions=0,totalToday=0;
+
+const rupiah=n=>new Intl.NumberFormat("id-ID",{
+  style:"currency",
+  currency:"IDR",
+  maximumFractionDigits:0
+}).format(n);
+
+function loadProducts(){
+  try{
+    const saved=localStorage.getItem("faruqPosProducts");
+    return saved?JSON.parse(saved):[...defaultProducts];
+  }catch(e){
+    return [...defaultProducts];
+  }
+}
+
+function saveProducts(){
+  localStorage.setItem("faruqPosProducts",JSON.stringify(products));
+}
+
+function login(){
+  const u=document.getElementById("username").value.trim();
+  const p=document.getElementById("password").value;
+
+  if(u==="Faruq" && p==="1234"){
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    init();
+  }else{
+    document.getElementById("error").textContent="Username atau password salah.";
+  }
+}
+
+function logout(){
+  location.reload();
+}
+
+function init(){
+  document.getElementById("date").textContent=
+    new Date().toLocaleDateString("id-ID",{
+      weekday:"long",
+      day:"numeric",
+      month:"long",
+      year:"numeric"
+    });
+
+  renderProducts();
+  renderCart();
+  renderManageProducts();
+}
+
+function showView(view){
+  const views={
+    kasir:"kasirView",
+    produk:"produkView",
+    pengaturan:"pengaturanView"
+  };
+
+  Object.entries(views).forEach(([key,id])=>{
+    document.getElementById(id).classList.toggle("hidden",key!==view);
+  });
+
+  ["kasir","produk","pengaturan"].forEach(key=>{
+    document.getElementById(
+      "nav"+key.charAt(0).toUpperCase()+key.slice(1)
+    ).classList.toggle("active",key===view);
+  });
+
+  if(view==="produk")renderManageProducts();
+}
+
+function addProduct(){
+  const name=document.getElementById("newName").value.trim();
+  const price=Number(document.getElementById("newPrice").value);
+  const emoji=document.getElementById("newEmoji").value.trim()||"📦";
+  const message=document.getElementById("settingsMessage");
+
+  if(!name||!Number.isFinite(price)||price<=0){
+    message.style.color="#b42318";
+    message.textContent="Isi nama barang dan harga yang benar.";
+    return;
+  }
+
+  if(products.some(x=>x.n.toLowerCase()===name.toLowerCase())){
+    message.style.color="#b42318";
+    message.textContent="Nama barang sudah ada.";
+    return;
+  }
+
+  products.push({
+    id:Date.now(),
+    n:name,
+    p:Math.round(price),
+    e:emoji
+  });
+
+  saveProducts();
+
+  document.getElementById("newName").value="";
+  document.getElementById("newPrice").value="";
+  document.getElementById("newEmoji").value="";
+
+  message.style.color="#1557d6";
+  message.textContent="Barang berhasil ditambahkan!";
+
+  renderProducts();
+  renderManageProducts();
+}
+
+function deleteProduct(id){
+  const item=products.find(x=>x.id===id);
+  if(!item)return;
+
+  const inCart=cart.some(x=>x.id===id);
+
+  if(inCart){
+    alert("Barang masih ada di keranjang. Hapus dari keranjang terlebih dahulu.");
+    return;
+  }
+
+  if(!confirm("Hapus "+item.n+" dari pilihan barang?"))return;
+
+  const index=products.findIndex(x=>x.id===id);
+  products.splice(index,1);
+
+  saveProducts();
+  renderProducts();
+  renderManageProducts();
+}
+
+function renderManageProducts(){
+  const el=document.getElementById("manageProducts");
+  if(!el)return;
+
+  el.innerHTML=products.length
+    ?products.map(x=>`
+      <div class="manage-item">
+        <div>
+          <b>${x.e} ${x.n}</b>
+          <small>${rupiah(x.p)}</small>
+        </div>
+        <button class="danger" onclick="deleteProduct(${x.id})">Hapus</button>
+      </div>
+    `).join("")
+    :"<p>Belum ada barang. Tambahkan melalui menu Pengaturan.</p>";
+}
+
+function renderProducts(){
+  const q=document.getElementById("search").value.toLowerCase();
+
+  document.getElementById("products").innerHTML=
+    products.filter(x=>x.n.toLowerCase().includes(q)).map(x=>`
+      <div class="product-card">
+        <button class="product" onclick="add(${x.id})">
+          <div class="pic">${x.e}</div>
+          <strong>${x.n}</strong>
+          <div class="price">${rupiah(x.p)}</div>
+        </button>
+
+        <button
+          class="product-delete"
+          title="Hapus barang"
+          aria-label="Hapus ${x.n}"
+          onclick="event.stopPropagation();deleteProduct(${x.id})"
+        >×</button>
+      </div>
+    `).join("");
+}
+
+function add(id){
+  const product=products.find(i=>i.id===id);
+  if(!product)return;
+
+  const x=cart.find(i=>i.id===id);
+
+  if(x)x.q++;
+  else cart.push({...product,q:1});
+
+  renderCart();
+}
+
+function change(id,d){
+  const x=cart.find(i=>i.id===id);
+  if(!x)return;
+
+  x.q+=d;
+
+  if(x.q<=0){
+    cart=cart.filter(i=>i.id!==id);
+  }
+
+  renderCart();
+}
+
+function renderCart(){
+  const el=document.getElementById("cart");
+
+  el.innerHTML=cart.length
+    ?cart.map(x=>`
+      <div class="item">
+        <div>
+          <b>${x.n}</b>
+          <small>${rupiah(x.p)} × ${x.q}</small>
+        </div>
+        <div class="qty">
+          <button onclick="change(${x.id},-1)">−</button>
+          <b>${x.q}</b>
+          <button onclick="change(${x.id},1)">+</button>
+        </div>
+      </div>
+    `).join("")
+    :"<p style='color:#778197'>Belum ada produk.</p>";
+
+  const total=cart.reduce((s,x)=>s+x.p*x.q,0);
+  const count=cart.reduce((s,x)=>s+x.q,0);
+
+  document.getElementById("subtotal").textContent=rupiah(total);
+  document.getElementById("grand").textContent=rupiah(total);
+  document.getElementById("count").textContent=count;
+  document.getElementById("todayTotal").textContent=rupiah(totalToday);
+  document.getElementById("trx").textContent=transactions;
+}
+
+function pay(){
+  const total=cart.reduce((s,x)=>s+x.p*x.q,0);
+
+  if(!total){
+    alert("Keranjang masih kosong.");
+    return;
+  }
+
+  totalToday+=total;
+  transactions++;
+
+  alert(
+    "Pembayaran berhasil!\n"+
+    "Metode: "+document.getElementById("method").value+
+    "\nTotal: "+rupiah(total)
+  );
+
+  cart=[];
+  renderCart();
+}
+</script>
+
+</body>
+</html>
