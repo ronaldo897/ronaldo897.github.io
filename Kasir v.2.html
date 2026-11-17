@@ -1,0 +1,455 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FARUQ POS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#0b1220;color:white}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:8px;padding:10px 15px;background:#2563eb;color:white}
+button:hover{filter:brightness(1.15)}
+input,select{padding:11px;border-radius:7px;border:1px solid #334155;background:#172337;color:white;width:100%;margin:5px 0}
+.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#061329,#173d70)}
+.login-box{background:#111e32;padding:30px;border-radius:15px;width:min(360px,90%)}
+.login-box h1{text-align:center;color:#38bdf8}
+.app{display:none}
+header{background:#111e32;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+header h2{margin:0;color:#38bdf8}
+.layout{display:flex;min-height:calc(100vh - 60px)}
+nav{width:190px;background:#101b2d;padding:15px;flex-shrink:0}
+nav button{width:100%;margin:5px 0;text-align:left;background:#1d2d45}
+main{padding:22px;flex:1;min-width:0}
+.page{display:none}
+.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px}
+.card,.panel{background:#142238;padding:18px;border-radius:12px;margin-bottom:15px}
+.card h3{color:#94a3b8;margin:0 0 10px}
+.card strong{font-size:25px}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.product{background:#192b44;border-radius:10px;padding:14px}
+.product button{width:100%;margin-top:8px}
+.pos-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr);gap:18px}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+td,th{padding:10px;border-bottom:1px solid #334155;text-align:left}
+.small{font-size:12px;color:#94a3b8}
+.danger{background:#dc2626}
+.secondary{background:#475569}
+.success{background:#059669}
+.modal{display:none;position:fixed;inset:0;background:#000b;z-index:10;place-items:center;padding:15px}
+.modal.show{display:grid}
+.modal-box{background:#142238;padding:22px;border-radius:13px;width:min(420px,100%);max-height:90vh;overflow:auto}
+.qr{display:grid;grid-template-columns:repeat(17,1fr);gap:2px;background:white;padding:9px;width:210px;height:210px;margin:15px auto}
+.qr span{background:#fff}
+.qr span.dark{background:#111}
+.qr-label{text-align:center;color:#facc15;font-weight:bold}
+.total{font-size:23px;color:#38bdf8;font-weight:bold}
+@media(max-width:750px){
+ .layout{display:block}
+ nav{width:100%;display:flex;overflow:auto;gap:5px}
+ nav button{min-width:max-content}
+ .pos-grid{grid-template-columns:1fr}
+ main{padding:12px}
+}
+@media print{
+ body{background:white;color:black}
+ body *{visibility:hidden}
+ #receipt,#receipt *{visibility:visible}
+ #receipt{position:absolute;top:0;left:0;width:100%;color:black;background:white}
+}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+ <div class="login-box">
+  <h1>FaruqZakiKasir</h1>
+  <p style="text-align:center">ahlusshufah</p>
+  <label>Username</label>
+  <input id="username" placeholder="Masukkan username">
+  <label>Password</label>
+  <input id="password" type="password" placeholder="Masukkan password">
+  <button style="width:100%;margin-top:12px" onclick="login()">Masuk</button>
+  <p class="small">Demo: Faruq / 1234</p>
+  <p id="loginError" style="color:#f87171"></p>
+ </div>
+</div>
+
+<div class="app" id="app">
+<header>
+ <h2>FaruqZakiKasir</h2>
+ <span>Kasir Kamu <button class="danger" onclick="logout()">Keluar</button></span>
+</header>
+<div class="layout">
+<nav>
+ <button onclick="showPage('dashboard')">🏠 Dashboard</button>
+ <button onclick="showPage('kasir')">🛒 Kasir</button>
+ <button onclick="showPage('barang')">📦 Data Barang</button>
+ <button onclick="showPage('riwayat')">📋 Riwayat</button>
+</nav>
+<main>
+
+<section class="page active" id="dashboard">
+ <h2>Dashboard</h2>
+ <div class="cards">
+  <div class="card"><h3>Total Penjualan</h3><strong id="sales">Rp0</strong></div>
+  <div class="card"><h3>Transaksi</h3><strong id="transactions">0</strong></div>
+  <div class="card"><h3>Jumlah Barang</h3><strong id="productCount">0</strong></div>
+  <div class="card"><h3>Barang Terjual</h3><strong id="soldCount">0</strong></div>
+ </div>
+</section>
+
+<section class="page" id="kasir">
+ <h2>Menu Kasir</h2>
+ <div class="pos-grid">
+  <div class="panel">
+   <input id="search" placeholder="Cari nama barang..." oninput="renderProducts()">
+   <div class="products" id="productGrid"></div>
+  </div>
+  <div class="panel">
+   <h3>Keranjang Belanja</h3>
+   <div id="cartList">Belum ada barang.</div>
+   <hr>
+   <label>Diskon (%)</label>
+   <input type="number" id="discount" value="0" min="0" max="100" oninput="renderCart()">
+   <p>Subtotal: <b id="subtotal">Rp0</b></p>
+   <p>Diskon: <b id="discountValue">Rp0</b></p>
+   <p>Total:</p>
+   <div class="total" id="grandTotal">Rp0</div>
+   <label>Metode Pembayaran</label>
+   <select id="method">
+    <option value="Tunai">Tunai</option>
+    <option value="Transfer">Transfer</option>
+    <option value="QRIS">QRIS</option>
+   </select>
+   <button class="success" style="width:100%;margin-top:12px" onclick="checkout()">Proses Pembayaran</button>
+   <button class="secondary" style="width:100%;margin-top:7px" onclick="clearCart()">Kosongkan Keranjang</button>
+  </div>
+ </div>
+</section>
+
+<section class="page" id="barang">
+ <h2>Data Barang</h2>
+ <div class="panel">
+  <h3>Tambah / Perbarui Barang</h3>
+  <input type="hidden" id="editId">
+  <label>Nama Barang</label><input id="itemName" placeholder="Nama barang">
+  <label>Harga</label><input id="itemPrice" type="number" placeholder="Harga">
+  <label>Stok</label><input id="itemStock" type="number" placeholder="Jumlah stok">
+  <button onclick="saveProduct()">Simpan Barang</button>
+  <button class="secondary" onclick="resetProductForm()">Batal</button>
+ </div>
+ <div class="panel">
+  <h3>Daftar Barang</h3>
+  <div style="overflow-x:auto">
+   <table><thead><tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
+   <tbody id="productTable"></tbody></table>
+  </div>
+ </div>
+</section>
+
+<section class="page" id="riwayat">
+ <h2>Riwayat Transaksi</h2>
+ <div class="panel" style="overflow-x:auto">
+  <table><thead><tr><th>Tanggal</th><th>Nomor</th><th>Total</th><th>Metode</th></tr></thead>
+  <tbody id="historyTable"></tbody></table>
+ </div>
+</section>
+
+</main>
+</div>
+</div>
+
+<!-- Modal QRIS -->
+<div class="modal" id="qrisModal">
+ <div class="modal-box">
+  <h2 style="text-align:center">Pembayaran QRIS</h2>
+  <p style="text-align:center">Total yang harus dibayar</p>
+  <div class="total" style="text-align:center" id="qrisTotal">Rp0</div>
+  <div class="qr" id="fakeQR"></div>
+  <div class="qr-label">QRIS DEMO - TIDAK DAPAT DIPINDAI</div>
+  <p class="small" style="text-align:center">Ini hanya simulasi tampilan QRIS. Tidak menerima pembayaran sungguhan.</p>
+  <button class="success" style="width:100%" onclick="confirmPayment()">Konfirmasi Pembayaran</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="closeQR()">Batal</button>
+ </div>
+</div>
+
+<div id="receipt" style="display:none"></div>
+
+<script>
+const rupiah = n => "Rp" + Number(n).toLocaleString("id-ID");
+
+let products = JSON.parse(localStorage.getItem("faruq_products")) || [
+ {id:1,name:"Beras 5 Kg",price:75000,stock:20},
+ {id:2,name:"Minyak Goreng",price:18000,stock:30},
+ {id:3,name:"Gula Pasir",price:16000,stock:25},
+ {id:4,name:"Mi Instan",price:3500,stock:100},
+ {id:5,name:"Air Mineral",price:4000,stock:50}
+];
+
+let transactions = JSON.parse(localStorage.getItem("faruq_transactions")) || [];
+let cart = [];
+let pendingSale = null;
+
+function saveData(){
+ localStorage.setItem("faruq_products",JSON.stringify(products));
+ localStorage.setItem("faruq_transactions",JSON.stringify(transactions));
+}
+
+function login(){
+ if(document.getElementById("username").value==="Faruq" &&
+    document.getElementById("password").value==="1234"){
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  refresh();
+ }else{
+  document.getElementById("loginError").textContent="Username atau password salah!";
+ }
+}
+
+function logout(){
+ document.getElementById("app").style.display="none";
+ document.getElementById("login").style.display="grid";
+}
+
+function showPage(id){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ refresh();
+}
+
+function renderProducts(){
+ let q=document.getElementById("search").value.toLowerCase();
+ let list=products.filter(p=>p.name.toLowerCase().includes(q));
+ document.getElementById("productGrid").innerHTML=list.map(p=>`
+ <div class="product">
+  <b>${escapeHTML(p.name)}</b>
+  <p>${rupiah(p.price)}</p>
+  <p class="small">Stok: ${p.stock}</p>
+  <button ${p.stock<=0?"disabled":""} onclick="addCart(${p.id})">+ Tambah</button>
+ </div>`).join("");
+}
+
+function addCart(id){
+ let p=products.find(x=>x.id===id);
+ let item=cart.find(x=>x.id===id);
+ if(!p || p.stock<=0)return alert("Stok habis!");
+ if(item && item.qty>=p.stock)return alert("Stok tidak mencukupi!");
+ if(item)item.qty++;
+ else cart.push({id:p.id,name:p.name,price:p.price,qty:1});
+ renderCart();
+}
+
+function changeQty(id,amount){
+ let item=cart.find(x=>x.id===id);
+ let p=products.find(x=>x.id===id);
+ if(!item)return;
+ if(amount>0 && item.qty>=p.stock)return alert("Stok tidak mencukupi!");
+ item.qty+=amount;
+ if(item.qty<=0)cart=cart.filter(x=>x.id!==id);
+ renderCart();
+}
+
+function getTotals(){
+ let subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);
+ let percent=Math.max(0,Math.min(100,Number(document.getElementById("discount").value)||0));
+ let discount=Math.round(subtotal*percent/100);
+ return {subtotal,discount,total:subtotal-discount};
+}
+
+function renderCart(){
+ let list=document.getElementById("cartList");
+ if(cart.length===0)list.innerHTML="Belum ada barang.";
+ else list.innerHTML=cart.map(x=>`
+ <div style="padding:8px 0;border-bottom:1px solid #334155">
+  <b>${escapeHTML(x.name)}</b><br>
+  ${rupiah(x.price)} × ${x.qty}
+  <div style="margin-top:6px">
+   <button onclick="changeQty(${x.id},-1)">−</button>
+   <button onclick="changeQty(${x.id},1)">+</button>
+   <button class="danger" onclick="changeQty(${x.id},-${x.qty})">Hapus</button>
+  </div>
+ </div>`).join("");
+ let t=getTotals();
+ document.getElementById("subtotal").textContent=rupiah(t.subtotal);
+ document.getElementById("discountValue").textContent=rupiah(t.discount);
+ document.getElementById("grandTotal").textContent=rupiah(t.total);
+}
+
+function checkout(){
+ if(cart.length===0)return alert("Keranjang masih kosong!");
+ let t=getTotals();
+ if(t.total<=0)return alert("Total pembayaran harus lebih dari nol!");
+ let method=document.getElementById("method").value;
+ pendingSale={items:cart.map(x=>({...x})),...t,method};
+ if(method==="QRIS"){
+  document.getElementById("qrisTotal").textContent=rupiah(t.total);
+  showFakeQR();
+  document.getElementById("qrisModal").classList.add("show");
+ }else{
+  confirmPayment();
+ }
+}
+
+function showFakeQR(){
+ // Pola kotak dekoratif untuk simulasi, bukan QR pembayaran.
+ let html="";
+ for(let y=0;y<17;y++){
+  for(let x=0;x<17;x++){
+   let finder=(x<5&&y<5)||(x>11&&y<5)||(x<5&&y>11);
+   let dark=finder ? (x===0||x===4||y===0||y===4||
+      (x>=1&&x<=3&&y>=1&&y<=3&&x!==2&&y!==2)||
+      (x===2&&y===2)) : ((x*y+x+y)%3===0 || (x+y*2)%5===0);
+   html+=`<span class="${dark?"dark":""}"></span>`;
+  }
+ }
+ document.getElementById("fakeQR").innerHTML=html;
+}
+
+function closeQR(){
+ document.getElementById("qrisModal").classList.remove("show");
+ pendingSale=null;
+}
+
+function confirmPayment(){
+ if(!pendingSale)return;
+ // Periksa stok sekali lagi sebelum menyimpan transaksi.
+ for(let item of pendingSale.items){
+  let p=products.find(x=>x.id===item.id);
+  if(!p || p.stock<item.qty){
+   alert("Stok "+item.name+" tidak mencukupi!");
+   closeQR();
+   return;
+  }
+ }
+ pendingSale.items.forEach(item=>{
+  products.find(p=>p.id===item.id).stock-=item.qty;
+ });
+ let sale={
+  ...pendingSale,
+  number:"TRX-"+Date.now(),
+  date:new Date().toLocaleString("id-ID")
+ };
+ transactions.unshift(sale);
+ saveData();
+ cart=[];
+ document.getElementById("discount").value=0;
+ document.getElementById("qrisModal").classList.remove("show");
+ pendingSale=null;
+ renderCart();
+ refresh();
+ printReceipt(sale);
+ alert("Transaksi berhasil disimpan!");
+}
+
+function printReceipt(sale){
+ let rows=sale.items.map(x=>`
+ <p>${escapeHTML(x.name)} (${x.qty} × ${rupiah(x.price)})</p>
+ `).join("");
+ let receipt=document.getElementById("receipt");
+ receipt.style.display="block";
+ receipt.innerHTML=`
+ <div style="font-family:Arial;padding:15px;max-width:350px;margin:auto">
+  <h2 style="text-align:center">FaruqZakyKasir</h2>
+  <p style="text-align:center">Struk Pembayaran</p>
+  <hr>
+  <p>${sale.number}</p><p>${sale.date}</p>
+  ${rows}
+  <hr>
+  <p>Subtotal: ${rupiah(sale.subtotal)}</p>
+  <p>Diskon: ${rupiah(sale.discount)}</p>
+  <h3>Total: ${rupiah(sale.total)}</h3>
+  <p>Metode: ${sale.method}</p>
+  <hr><p style="text-align:center">Terima kasih telah berbelanja!</p>
+ </div>`;
+ window.print();
+ receipt.style.display="none";
+}
+
+function clearCart(){
+ if(confirm("Kosongkan keranjang?")){
+  cart=[];
+  renderCart();
+ }
+}
+
+function saveProduct(){
+ let name=document.getElementById("itemName").value.trim();
+ let price=Number(document.getElementById("itemPrice").value);
+ let stock=Number(document.getElementById("itemStock").value);
+ let id=Number(document.getElementById("editId").value);
+ if(!name || price<=0 || stock<0 || !Number.isFinite(price+stock))
+  return alert("Isi data barang dengan benar!");
+ if(id){
+  let p=products.find(x=>x.id===id);
+  if(p){p.name=name;p.price=price;p.stock=stock;}
+ }else{
+  products.push({id:Date.now(),name,price,stock});
+ }
+ saveData();
+ resetProductForm();
+ refresh();
+}
+
+function editProduct(id){
+ let p=products.find(x=>x.id===id);
+ document.getElementById("editId").value=p.id;
+ document.getElementById("itemName").value=p.name;
+ document.getElementById("itemPrice").value=p.price;
+ document.getElementById("itemStock").value=p.stock;
+ window.scrollTo(0,0);
+}
+
+function deleteProduct(id){
+ if(!confirm("Hapus barang ini?"))return;
+ products=products.filter(x=>x.id!==id);
+ cart=cart.filter(x=>x.id!==id);
+ saveData();
+ refresh();
+ renderCart();
+}
+
+function resetProductForm(){
+ ["editId","itemName","itemPrice","itemStock"].forEach(id=>document.getElementById(id).value="");
+}
+
+function renderTable(){
+ document.getElementById("productTable").innerHTML=products.map(p=>`
+ <tr>
+  <td>${escapeHTML(p.name)}</td>
+  <td>${rupiah(p.price)}</td>
+  <td>${p.stock}</td>
+  <td>
+   <button onclick="editProduct(${p.id})">Edit</button>
+   <button class="danger" onclick="deleteProduct(${p.id})">Hapus</button>
+  </td>
+ </tr>`).join("");
+ document.getElementById("historyTable").innerHTML=transactions.map(t=>`
+ <tr><td>${t.date}</td><td>${t.number}</td><td>${rupiah(t.total)}</td><td>${t.method}</td></tr>
+ `).join("");
+}
+
+function refresh(){
+ let total=transactions.reduce((s,t)=>s+t.total,0);
+ let sold=transactions.reduce((s,t)=>s+t.items.reduce((a,x)=>a+x.qty,0),0);
+ document.getElementById("sales").textContent=rupiah(total);
+ document.getElementById("transactions").textContent=transactions.length;
+ document.getElementById("productCount").textContent=products.length;
+ document.getElementById("soldCount").textContent=sold;
+ renderProducts();
+ renderTable();
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+refresh();
+renderCart();
+</script>
+</body>
+</html>
